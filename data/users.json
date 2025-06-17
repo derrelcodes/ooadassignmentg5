@@ -10,5 +10,11 @@
         "role": "student",
         "fullname": "Pharthiban",
         "username": "pharthurocks"
+    },
+    {
+        "password": "bipolar",
+        "role": "management",
+        "fullname": "Kusuma",
+        "username": "kusumawati"
     }
 ]

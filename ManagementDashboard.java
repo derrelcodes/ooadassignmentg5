@@ -1,22 +1,67 @@
 import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class ManagementDashboard {
     public ManagementDashboard(String username) {
         JFrame frame = new JFrame("Management Dashboard");
-        frame.setSize(600, 400);
+        frame.setSize(800, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JLabel welcome = new JLabel("Welcome, " + username + " (Management)");
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        JLabel header = new JLabel("Welcome, " + username , JLabel.CENTER);
+        header.setFont(new Font("Arial", Font.BOLD, 16));
+        mainPanel.add(header, BorderLayout.NORTH);
+
+        JPanel eventPanel = new JPanel();
+        eventPanel.setLayout(new BoxLayout(eventPanel, BoxLayout.Y_AXIS));
+
+        try {
+            String content = new String(Files.readAllBytes(Paths.get("data/events.json")));
+            JSONArray events = new JSONArray(content);
+            for (int i = 0; i < events.length(); i++) {
+                JSONObject event = events.getJSONObject(i);
+                JPanel card = new JPanel(new GridLayout(0, 1));
+                card.setBorder(BorderFactory.createTitledBorder(event.getString("name")));
+                card.add(new JLabel("Type: " + event.getString("type")));
+                card.add(new JLabel("Venue: " + event.getString("venue")));
+                card.add(new JLabel("Date: " + event.getString("date")));
+
+                JButton updateBtn = new JButton("Update");
+                JButton cancelBtn = new JButton("Cancel Event");
+                JButton toggleBtn = new JButton(event.optBoolean("registration_open", true) ? "Close Registration" : "Open Registration");
+                JButton viewParticipantsBtn = new JButton("View Participants");
+
+                // TODO: addActionListener implementations for each button
+                JPanel buttonPanel = new JPanel();
+                buttonPanel.add(updateBtn);
+                buttonPanel.add(cancelBtn);
+                buttonPanel.add(toggleBtn);
+                buttonPanel.add(viewParticipantsBtn);
+
+                card.add(buttonPanel);
+                eventPanel.add(card);
+                eventPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
+        } catch (Exception e) {
+            eventPanel.add(new JLabel("Failed to load events."));
+        }
+
+        JScrollPane scrollPane = new JScrollPane(eventPanel);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
         JButton signOut = new JButton("Sign Out");
         signOut.addActionListener(e -> {
             frame.dispose();
             new MainPage().createAndShowGUI();
         });
 
-        JPanel panel = new JPanel(new java.awt.BorderLayout());
-        panel.add(welcome, java.awt.BorderLayout.CENTER);
-        panel.add(signOut, java.awt.BorderLayout.SOUTH);
-
-        frame.add(panel);
+        mainPanel.add(signOut, BorderLayout.SOUTH);
+        frame.setContentPane(mainPanel);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }

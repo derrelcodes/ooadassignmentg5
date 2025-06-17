@@ -1,0 +1,61 @@
+[
+  {
+    "event_id": "seminar2025",
+    "name": "Tech Future Seminar",
+    "type": "Seminar",
+    "venue": "Auditorium A",
+    "date": "2025-07-25",
+    "capacity": 50,
+    "registration_open": true,
+    "cancelled": false,
+    "participants": []
+  },
+  {
+    "event_id": "sports2025",
+    "name": "Interfaculty Futsal",
+    "type": "Sports",
+    "venue": "Sports Complex",
+    "date": "2025-07-20",
+    "capacity": 20,
+    "registration_open": false,
+    "cancelled": false,
+    "participants": []
+  },
+  {
+    "event_id": "culture2025",
+    "name": "Merdeka Cultural Night",
+    "type": "Cultural",
+    "venue": "MPH Hall",
+    "date": "2025-07-22",
+    "capacity": 100,
+    "registration_open": true,
+    "cancelled": true,
+    "participants": []
+  },
+  {
+    "event_id": "workshop2025",
+    "name": "Python AI Workshop",
+    "type": "Workshop",
+    "venue": "Lab B1",
+    "date": "2025-07-24",
+    "capacity": 30,
+    "registration_open": true,
+    "cancelled": false,
+    "participants": [
+      { "username": "user1" },
+      { "username": "user2" },
+      { "username": "user3" }
+    ]
+  },
+  {
+    "event_id": "expired2025",
+    "name": "Old Networking Talk",
+    "type": "Seminar",
+    "venue": "Seminar Room 3",
+    "date": "2025-06-01",
+    "capacity": 40,
+    "registration_open": true,
+    "cancelled": false,
+    "participants": []
+  }
+]
