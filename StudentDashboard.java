@@ -1,3 +1,5 @@
+// StudentDashboard.java
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -14,7 +16,7 @@ public class StudentDashboard {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        JLabel header = new JLabel("Welcome, " + username , JLabel.CENTER);
+        JLabel header = new JLabel("Welcome, " + username + " (Student/Staff)", JLabel.CENTER);
         header.setFont(new Font("Arial", Font.BOLD, 16));
         mainPanel.add(header, BorderLayout.NORTH);
 
@@ -47,7 +49,13 @@ public class StudentDashboard {
 
                 JButton actionBtn = new JButton(status);
                 actionBtn.setEnabled(status.equals("Register"));
-                // Optional: actionBtn.addActionListener(...) for actual registration
+
+                if (status.equals("Register")) {
+                    actionBtn.addActionListener(e -> {
+                        frame.dispose();
+                        new RegistrationForm(username, event);
+                    });
+                }
 
                 card.add(actionBtn);
                 eventPanel.add(card);
@@ -55,6 +63,7 @@ public class StudentDashboard {
             }
         } catch (Exception e) {
             eventPanel.add(new JLabel("Failed to load events."));
+            e.printStackTrace();
         }
 
         JScrollPane scrollPane = new JScrollPane(eventPanel);
@@ -72,3 +81,5 @@ public class StudentDashboard {
         frame.setVisible(true);
     }
 }
+
+

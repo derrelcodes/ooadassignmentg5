@@ -1,3 +1,5 @@
+// ManagementDashboard.java
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -13,7 +15,7 @@ public class ManagementDashboard {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        JLabel header = new JLabel("Welcome, " + username , JLabel.CENTER);
+        JLabel header = new JLabel("Welcome, " + username + " (Management)", JLabel.CENTER);
         header.setFont(new Font("Arial", Font.BOLD, 16));
         mainPanel.add(header, BorderLayout.NORTH);
 
@@ -36,7 +38,31 @@ public class ManagementDashboard {
                 JButton toggleBtn = new JButton(event.optBoolean("registration_open", true) ? "Close Registration" : "Open Registration");
                 JButton viewParticipantsBtn = new JButton("View Participants");
 
-                // TODO: addActionListener implementations for each button
+                updateBtn.addActionListener(e -> {
+                    frame.dispose();
+                    new UpdateEventForm(event);
+                });
+
+                cancelBtn.addActionListener(e -> {
+                    event.put("cancelled", true);
+                    saveAllEvents(events);
+                    JOptionPane.showMessageDialog(frame, "Event marked as cancelled.");
+                    frame.dispose();
+                    new ManagementDashboard(username);
+                });
+
+                toggleBtn.addActionListener(e -> {
+                    event.put("registration_open", !event.optBoolean("registration_open", true));
+                    saveAllEvents(events);
+                    frame.dispose();
+                    new ManagementDashboard(username);
+                });
+
+                viewParticipantsBtn.addActionListener(e -> {
+                    frame.dispose();
+                    new ParticipantListPage(event);
+                });
+
                 JPanel buttonPanel = new JPanel();
                 buttonPanel.add(updateBtn);
                 buttonPanel.add(cancelBtn);
@@ -49,6 +75,7 @@ public class ManagementDashboard {
             }
         } catch (Exception e) {
             eventPanel.add(new JLabel("Failed to load events."));
+            e.printStackTrace();
         }
 
         JScrollPane scrollPane = new JScrollPane(eventPanel);
@@ -64,5 +91,13 @@ public class ManagementDashboard {
         frame.setContentPane(mainPanel);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+
+    private void saveAllEvents(JSONArray events) {
+        try (FileWriter writer = new FileWriter("data/events.json")) {
+            writer.write(events.toString(4));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
