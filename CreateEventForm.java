@@ -1,149 +1,205 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.time.LocalDate;
 
 public class CreateEventForm {
     private JFrame frame;
-    private JTextField nameField, venueField, capacityField, startTimeField, endTimeField;
-    private JComboBox<String> typeBox;
-    private JCheckBox hasFeeBox, outsideMMUBox;
-    private JTextField earlyBirdLimitField, earlyBirdPriceField, normalPriceField, transportFeeField;
-    private JCheckBox provideFoodBox, provideTransportBox;
-    private JSpinner dateSpinner;
+    private String username;
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel mainPanel = new JPanel(cardLayout);
 
-    public CreateEventForm(String createdBy) {
-        frame = new JFrame("Create Event");
-        frame.setSize(500, 600);
-        frame.setLayout(new BorderLayout());
+    // Part 1 fields
+    private JTextField nameField, venueField;
+    private JComboBox<String> typeComboBox;
+    private JSpinner dateSpinner, startTimeSpinner, endTimeSpinner;
+    private JCheckBox outsideMmuCheckBox, hasFeeCheckBox;
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-        nameField = new JTextField();
-        venueField = new JTextField();
-        capacityField = new JTextField();
-        startTimeField = new JTextField();
-        endTimeField = new JTextField();
-        typeBox = new JComboBox<>(new String[] {"Seminar", "Workshop", "Cultural", "Sports"});
-        hasFeeBox = new JCheckBox("Has Registration Fee?");
-        outsideMMUBox = new JCheckBox("Venue Outside MMU?");
-
-        SpinnerDateModel dateModel = new SpinnerDateModel();
-        dateSpinner = new JSpinner(dateModel);
-        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
-
-        panel.add(new JLabel("Event Name:"));
-        panel.add(nameField);
-        panel.add(new JLabel("Type:"));
-        panel.add(typeBox);
-        panel.add(new JLabel("Venue:"));
-        panel.add(venueField);
-        panel.add(new JLabel("Event Date:"));
-        panel.add(dateSpinner);
-        panel.add(new JLabel("Start Time (HH:mm):"));
-        panel.add(startTimeField);
-        panel.add(new JLabel("End Time (HH:mm):"));
-        panel.add(endTimeField);
-        panel.add(new JLabel("Capacity:"));
-        panel.add(capacityField);
-        panel.add(outsideMMUBox);
-        panel.add(hasFeeBox);
-
-        // Conditional Panel
-        JPanel part2Panel = new JPanel();
-        part2Panel.setLayout(new BoxLayout(part2Panel, BoxLayout.Y_AXIS));
-        earlyBirdLimitField = new JTextField();
-        earlyBirdPriceField = new JTextField();
-        normalPriceField = new JTextField();
-        transportFeeField = new JTextField();
-        provideFoodBox = new JCheckBox("Provide Food?");
-        provideTransportBox = new JCheckBox("Provide Transport?");
-
-        part2Panel.add(new JLabel("Early Bird Pax Limit:"));
-        part2Panel.add(earlyBirdLimitField);
-        part2Panel.add(new JLabel("Early Bird Price:"));
-        part2Panel.add(earlyBirdPriceField);
-        part2Panel.add(new JLabel("Normal Price:"));
-        part2Panel.add(normalPriceField);
-        part2Panel.add(new JLabel("Transport Fee:"));
-        part2Panel.add(transportFeeField);
-        part2Panel.add(provideFoodBox);
-        part2Panel.add(provideTransportBox);
-
-        part2Panel.setVisible(false);
-        panel.add(part2Panel);
-
-        hasFeeBox.addActionListener(e -> updatePart2Visibility(part2Panel));
-        outsideMMUBox.addActionListener(e -> updatePart2Visibility(part2Panel));
-
-        JButton createBtn = new JButton("Create Event");
-        createBtn.addActionListener(e -> saveEvent());
-
-        panel.add(createBtn);
-        frame.add(panel, BorderLayout.CENTER);
+    // Part 2 fields
+    private JCheckBox provideFoodCheckBox, provideTransportCheckBox;
+    private JTextField transportFeeField, earlyBirdPriceField, earlyBirdLimitField, normalPriceField, capacityField;
+    
+    public CreateEventForm(String username) {
+        this.username = username;
+        frame = new JFrame("Create New Event");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 650);
         frame.setLocationRelativeTo(null);
+
+        JPanel part1Panel = createPart1Panel();
+        JPanel part2Panel = createPart2Panel();
+
+        mainPanel.add(part1Panel, "Part1");
+        mainPanel.add(part2Panel, "Part2");
+
+        frame.add(mainPanel);
+        cardLayout.show(mainPanel, "Part1");
         frame.setVisible(true);
     }
 
-    private void updatePart2Visibility(JPanel part2Panel) {
-        boolean show = hasFeeBox.isSelected() || outsideMMUBox.isSelected();
-        part2Panel.setVisible(show);
-        frame.revalidate();
-        frame.repaint();
-    }
+    private JPanel createPart1Panel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Create Event (Part 1 of 2)"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
+        // Labels and Fields
+        gbc.gridx = 0;
+        gbc.weightx = 0.3;
+        String[] labels = {"Event Name:", "Type of Event:", "Venue:", "Date:", "Start Time:", "End Time:", "Capacity:"};
+        for (int i = 0; i < labels.length; i++) {
+            gbc.gridy = i;
+            panel.add(new JLabel(labels[i]), gbc);
+        }
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        
+        nameField = new JTextField(20); gbc.gridy = 0; panel.add(nameField, gbc);
+        typeComboBox = new JComboBox<>(new String[]{"Seminar", "Workshop", "Cultural", "Sports"}); gbc.gridy = 1; panel.add(typeComboBox, gbc);
+        venueField = new JTextField(20); gbc.gridy = 2; panel.add(venueField, gbc);
+        
+        dateSpinner = new JSpinner(new SpinnerDateModel());
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
+        gbc.gridy = 3; panel.add(dateSpinner, gbc);
+
+        startTimeSpinner = new JSpinner(new SpinnerDateModel());
+        startTimeSpinner.setEditor(new JSpinner.DateEditor(startTimeSpinner, "HH:mm"));
+        gbc.gridy = 4; panel.add(startTimeSpinner, gbc);
+
+        endTimeSpinner = new JSpinner(new SpinnerDateModel());
+        endTimeSpinner.setEditor(new JSpinner.DateEditor(endTimeSpinner, "HH:mm"));
+        gbc.gridy = 5; panel.add(endTimeSpinner, gbc);
+        
+        capacityField = new JTextField(5); gbc.gridy = 6; panel.add(capacityField, gbc);
+        
+        // Checkboxes
+        gbc.gridy = 7; gbc.gridwidth = 2;
+        outsideMmuCheckBox = new JCheckBox("Is the venue located outside MMU?");
+        panel.add(outsideMmuCheckBox, gbc);
+        
+        gbc.gridy = 8;
+        hasFeeCheckBox = new JCheckBox("Does the event have registration fees?");
+        panel.add(hasFeeCheckBox, gbc);
+        
+        // Navigation buttons
+        gbc.gridy = 9; gbc.anchor = GridBagConstraints.EAST;
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton backButton = new JButton("BACK");
+        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(username); });
+        JButton nextButton = new JButton("NEXT");
+        nextButton.addActionListener(e -> cardLayout.show(mainPanel, "Part2"));
+        buttonPanel.add(backButton);
+        buttonPanel.add(nextButton);
+        panel.add(buttonPanel, gbc);
+        
+        return panel;
+    }
+    
+    private JPanel createPart2Panel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Create Event (Part 2 of 2)"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        gbc.gridwidth = 2; gbc.gridx = 0;
+        
+        provideFoodCheckBox = new JCheckBox("Is food provided for participants?"); gbc.gridy = 0; panel.add(provideFoodCheckBox, gbc);
+        provideTransportCheckBox = new JCheckBox("Is transportation provided for participants?"); gbc.gridy = 1; panel.add(provideTransportCheckBox, gbc);
+        
+        gbc.gridwidth = 1;
+        gbc.gridx = 0; gbc.gridy = 2; panel.add(new JLabel("Transportation Fee:"), gbc);
+        transportFeeField = new JTextField("0"); gbc.gridx = 1; panel.add(transportFeeField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3; panel.add(new JLabel("Normal Price:"), gbc);
+        normalPriceField = new JTextField("0"); gbc.gridx = 1; panel.add(normalPriceField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 4; panel.add(new JLabel("Early Bird Price:"), gbc);
+        earlyBirdPriceField = new JTextField("0"); gbc.gridx = 1; panel.add(earlyBirdPriceField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 5; panel.add(new JLabel("Early Bird Pax Limit:"), gbc);
+        earlyBirdLimitField = new JTextField("0"); gbc.gridx = 1; panel.add(earlyBirdLimitField, gbc);
+        
+        // Action listeners to enable/disable fields
+        hasFeeCheckBox.addActionListener(e -> toggleFeeFields());
+        provideTransportCheckBox.addActionListener(e -> toggleFeeFields());
+        toggleFeeFields(); // Initial call
+        
+        // Navigation buttons
+        gbc.gridy = 6; gbc.gridx = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton backButton = new JButton("BACK");
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "Part1"));
+        JButton continueButton = new JButton("CONTINUE");
+        continueButton.addActionListener(e -> saveEvent());
+        buttonPanel.add(backButton);
+        buttonPanel.add(continueButton);
+        panel.add(buttonPanel, gbc);
+        
+        return panel;
+    }
+    
+    private void toggleFeeFields() {
+        boolean feesEnabled = hasFeeCheckBox.isSelected();
+        normalPriceField.setEnabled(feesEnabled);
+        earlyBirdPriceField.setEnabled(feesEnabled);
+        earlyBirdLimitField.setEnabled(feesEnabled);
+        
+        boolean transportEnabled = provideTransportCheckBox.isSelected();
+        transportFeeField.setEnabled(transportEnabled);
+    }
+    
     private void saveEvent() {
         try {
-            JSONObject event = new JSONObject();
-            event.put("event_id", UUID.randomUUID().toString());
-            event.put("name", nameField.getText());
-            event.put("type", typeBox.getSelectedItem());
-            event.put("venue", venueField.getText());
-            event.put("date", new java.text.SimpleDateFormat("yyyy-MM-dd").format(dateSpinner.getValue()));
-            event.put("start_time", startTimeField.getText());
-            event.put("end_time", endTimeField.getText());
-            event.put("capacity", Integer.parseInt(capacityField.getText()));
-            event.put("registration_open", true);
-            event.put("cancelled", false);
-            event.put("participants", new JSONArray());
-            event.put("outside_mmu", outsideMMUBox.isSelected());
-            event.put("has_fee", hasFeeBox.isSelected());
+            JSONObject newEvent = new JSONObject();
+            newEvent.put("event_id", "EVT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            newEvent.put("name", nameField.getText());
+            newEvent.put("type", (String) typeComboBox.getSelectedItem());
+            newEvent.put("venue", venueField.getText());
+            newEvent.put("date", new SimpleDateFormat("yyyy-MM-dd").format((Date) dateSpinner.getValue()));
+            newEvent.put("start_time", new SimpleDateFormat("HH:mm").format((Date) startTimeSpinner.getValue()));
+            newEvent.put("end_time", new SimpleDateFormat("HH:mm").format((Date) endTimeSpinner.getValue()));
+            newEvent.put("capacity", Integer.parseInt(capacityField.getText()));
+            newEvent.put("has_fee", hasFeeCheckBox.isSelected());
+            
+            newEvent.put("provides_food", provideFoodCheckBox.isSelected());
+            newEvent.put("provides_transportation", provideTransportCheckBox.isSelected());
+            newEvent.put("transport_fee", Double.parseDouble(transportFeeField.getText()));
+            newEvent.put("base_price", Double.parseDouble(normalPriceField.getText()));
+            newEvent.put("early_bird_price", Double.parseDouble(earlyBirdPriceField.getText()));
+            newEvent.put("early_bird_limit", Integer.parseInt(earlyBirdLimitField.getText()));
+            
+            newEvent.put("registration_open", true);
+            newEvent.put("cancelled", false);
+            newEvent.put("participants", new JSONArray());
 
-            if (hasFeeBox.isSelected() || outsideMMUBox.isSelected()) {
-                event.put("early_bird_limit", Integer.parseInt(earlyBirdLimitField.getText()));
-                event.put("early_bird_price", Double.parseDouble(earlyBirdPriceField.getText()));
-                event.put("normal_price", Double.parseDouble(normalPriceField.getText()));
-                event.put("transport_fee", Double.parseDouble(transportFeeField.getText()));
-                event.put("provides_food", provideFoodBox.isSelected());
-                event.put("provides_transportation", provideTransportBox.isSelected());
+            JSONArray events = new JSONArray(new String(Files.readAllBytes(Paths.get("data/events.json"))));
+            events.put(newEvent);
+
+            try (FileWriter writer = new FileWriter("data/events.json")) {
+                writer.write(events.toString(4));
             }
 
-            File file = new File("data/events.json");
-            JSONArray allEvents;
-            if (file.exists()) {
-                String content = new String(Files.readAllBytes(file.toPath()));
-                allEvents = new JSONArray(content);
-            } else {
-                allEvents = new JSONArray();
-            }
-            allEvents.put(event);
-
-            FileWriter writer = new FileWriter(file);
-            writer.write(allEvents.toString(4));
-            writer.close();
-
-            JOptionPane.showMessageDialog(frame, "Event Created Successfully!");
+            JOptionPane.showMessageDialog(frame, "Event created successfully!");
             frame.dispose();
-            new ManagementDashboard("management");
+            new ManagementDashboard(username);
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(frame, "Error creating event: " + e.getMessage());
+            JOptionPane.showMessageDialog(frame, "Error creating event: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
