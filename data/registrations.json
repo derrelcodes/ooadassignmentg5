@@ -1,8 +1,22 @@
-[{
-    "event_id": "seminar2025",
-    "dietary": false,
-    "booking_date": "2025-06-24",
-    "paid_amount": 0,
-    "transport": false,
-    "username": "pharthurocks"
-}]
+[
+    {
+        "event_id": "seminar2025",
+        "dietary": false,
+        "booking_date": "2025-06-24",
+        "paid_amount": 0,
+        "transport": false,
+        "username": "pharthurocks"
+    },
+    {
+        "studentId": "1211107055",
+        "event_id": "EVT-F2664F70",
+        "dietary": "Non-Vegetarian",
+        "booking_date": "2025-06-24",
+        "contact": "0172834245",
+        "paid_amount": 0,
+        "fullName": "Pharthiban",
+        "transport": "No",
+        "email": "pharthiban@gmail.com",
+        "username": "pharthurocks"
+    }
+]
