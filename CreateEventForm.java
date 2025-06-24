@@ -98,7 +98,7 @@ public class CreateEventForm {
         gbc.gridy = 9; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("BACK");
-        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(username); });
+        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(username, "management"); });
         JButton nextButton = new JButton("NEXT");
         nextButton.addActionListener(e -> cardLayout.show(mainPanel, "Part2"));
         buttonPanel.add(backButton);
@@ -183,6 +183,9 @@ public class CreateEventForm {
             newEvent.put("early_bird_price", Double.parseDouble(earlyBirdPriceField.getText()));
             newEvent.put("early_bird_limit", Integer.parseInt(earlyBirdLimitField.getText()));
             
+            // Add the creator's username
+            newEvent.put("createdBy", this.username);
+            
             newEvent.put("registration_open", true);
             newEvent.put("cancelled", false);
             newEvent.put("participants", new JSONArray());
@@ -196,7 +199,7 @@ public class CreateEventForm {
 
             JOptionPane.showMessageDialog(frame, "Event created successfully!");
             frame.dispose();
-            new ManagementDashboard(username);
+            new ManagementDashboard(username, "management");
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(frame, "Error creating event: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

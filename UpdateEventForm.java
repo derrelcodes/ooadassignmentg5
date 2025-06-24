@@ -12,6 +12,7 @@ import java.io.FileWriter;
 public class UpdateEventForm {
     private JFrame frame;
     private String username;
+    private String role; // Add role
     private JSONObject eventToUpdate;
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
@@ -26,11 +27,11 @@ public class UpdateEventForm {
     private JCheckBox provideFoodCheckBox, provideTransportCheckBox;
     private JTextField transportFeeField, earlyBirdPriceField, earlyBirdLimitField, normalPriceField;
 
-    public UpdateEventForm(JSONObject event) {
+    // Update the constructor
+    public UpdateEventForm(JSONObject event, String username, String role) {
         this.eventToUpdate = event;
-        // Assuming the manager who created it is updating, or any manager can.
-        // If you need to track the creator, the username should be stored with the event.
-        this.username = "management"; // Placeholder username
+        this.username = username;
+        this.role = role;
 
         frame = new JFrame("Update Event: " + event.getString("name"));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -43,7 +44,7 @@ public class UpdateEventForm {
         mainPanel.add(part1Panel, "Part1");
         mainPanel.add(part2Panel, "Part2");
         
-        populateFields(); // Populate form with existing event data
+        populateFields();
 
         frame.add(mainPanel);
         cardLayout.show(mainPanel, "Part1");
@@ -61,7 +62,6 @@ public class UpdateEventForm {
             startTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("start_time")));
             endTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("end_time")));
         } catch (Exception e) {
-            // Set to default if parsing fails
             dateSpinner.setValue(new Date());
             startTimeSpinner.setValue(new Date());
             endTimeSpinner.setValue(new Date());
@@ -77,11 +77,9 @@ public class UpdateEventForm {
         earlyBirdPriceField.setText(String.valueOf(eventToUpdate.optDouble("early_bird_price")));
         earlyBirdLimitField.setText(String.valueOf(eventToUpdate.optInt("early_bird_limit")));
         
-        toggleFeeFields(); // Ensure fields are enabled/disabled correctly on load
+        toggleFeeFields();
     }
     
-    // createPart1Panel() and createPart2Panel() are nearly identical to CreateEventForm
-    // but with different button actions
     private JPanel createPart1Panel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Update Event (Part 1 of 2)"));
@@ -124,7 +122,8 @@ public class UpdateEventForm {
         gbc.gridy = 9; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("CANCEL");
-        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(username); });
+        // FIX: Call the correct constructor
+        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(this.username, this.role); });
         JButton nextButton = new JButton("NEXT");
         nextButton.addActionListener(e -> cardLayout.show(mainPanel, "Part2"));
         buttonPanel.add(backButton);
@@ -187,7 +186,6 @@ public class UpdateEventForm {
     
     private void saveUpdatedEvent() {
         try {
-            // Update the fields of the existing JSONObject
             eventToUpdate.put("name", nameField.getText());
             eventToUpdate.put("type", typeComboBox.getSelectedItem());
             eventToUpdate.put("venue", venueField.getText());
@@ -203,11 +201,10 @@ public class UpdateEventForm {
             eventToUpdate.put("early_bird_price", Double.parseDouble(earlyBirdPriceField.getText()));
             eventToUpdate.put("early_bird_limit", Integer.parseInt(earlyBirdLimitField.getText()));
 
-            // Read all events, find the one with the matching ID, and replace it
             JSONArray events = new JSONArray(new String(Files.readAllBytes(Paths.get("data/events.json"))));
             for (int i = 0; i < events.length(); i++) {
                 if (events.getJSONObject(i).getString("event_id").equals(eventToUpdate.getString("event_id"))) {
-                    events.put(i, eventToUpdate); // Replace the old object with the updated one
+                    events.put(i, eventToUpdate);
                     break;
                 }
             }
@@ -218,7 +215,8 @@ public class UpdateEventForm {
 
             JOptionPane.showMessageDialog(frame, "Event updated successfully!");
             frame.dispose();
-            new ManagementDashboard(username);
+            // FIX: Call the correct constructor
+            new ManagementDashboard(this.username, this.role);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(frame, "Error updating event: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

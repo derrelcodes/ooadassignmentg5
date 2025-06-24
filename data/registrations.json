@@ -18,5 +18,17 @@
         "transport": "No",
         "email": "pharthiban@gmail.com",
         "username": "pharthurocks"
+    },
+    {
+        "studentId": "1211107055",
+        "event_id": "EVT-398E0BAB",
+        "dietary": "Non-Vegetarian",
+        "booking_date": "2025-06-24",
+        "contact": "0172834245",
+        "paid_amount": 15,
+        "fullName": "Pharthiban",
+        "transport": "No",
+        "email": "pharthiban@gmail.com",
+        "username": "pharthurocks"
     }
 ]

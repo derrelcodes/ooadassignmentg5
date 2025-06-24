@@ -17,13 +17,18 @@ public class MainPage {
 
         JButton studentBtn = new JButton("STUDENT / STAFF");
         JButton mgmtBtn = new JButton("MANAGEMENT");
+        // New button for System Admin
+        JButton adminBtn = new JButton("SYSTEM ADMIN");
 
         studentBtn.addActionListener(e -> new LoginForm("student"));
         mgmtBtn.addActionListener(e -> new LoginForm("management"));
+        // Action listener for the new button
+        adminBtn.addActionListener(e -> new LoginForm("admin"));
 
         JPanel btnPanel = new JPanel();
         btnPanel.add(studentBtn);
         btnPanel.add(mgmtBtn);
+        btnPanel.add(adminBtn); // Add the button to the panel
 
         frame.setLayout(new java.awt.GridLayout(3, 1));
         frame.add(title);

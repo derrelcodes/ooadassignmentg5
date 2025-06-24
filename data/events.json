@@ -66,5 +66,26 @@
         "provides_food": true,
         "provides_transportation": false,
         "participants": [{"username": "pharthurocks"}]
+    },
+    {
+        "date": "2025-06-27",
+        "venue": "MMU Stadium",
+        "early_bird_limit": 2,
+        "end_time": "17:00",
+        "type": "Sports",
+        "transport_fee": 0,
+        "has_fee": true,
+        "capacity": 5,
+        "early_bird_price": 15,
+        "start_time": "09:00",
+        "event_id": "EVT-398E0BAB",
+        "createdBy": "saddam",
+        "name": "Sports Fiesta",
+        "base_price": 20,
+        "cancelled": false,
+        "registration_open": true,
+        "provides_food": true,
+        "provides_transportation": false,
+        "participants": [{"username": "pharthurocks"}]
     }
 ]

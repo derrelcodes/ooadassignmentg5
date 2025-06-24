@@ -16,9 +16,12 @@ public class ManagementDashboard {
     private JFrame frame;
     private JPanel eventsPanel;
     private String username;
+    private String role; // Add role field
 
-    public ManagementDashboard(String username) {
+    // Modify constructor to accept role
+    public ManagementDashboard(String username, String role) {
         this.username = username;
+        this.role = role; // Store the role
         frame = new JFrame("Management Dashboard");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
@@ -36,7 +39,7 @@ public class ManagementDashboard {
         
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        loadAllEvents();
+        loadVisibleEvents(); // Use the new method
         frame.setVisible(true);
     }
 
@@ -54,6 +57,10 @@ public class ManagementDashboard {
             new CreateEventForm(username);
         });
 
+        // New "Manage Users" button
+        JButton manageUsersButton = new JButton("MANAGE USERS");
+        manageUsersButton.addActionListener(e -> new UserManagementPage());
+
         JButton signOutButton = new JButton("SIGN OUT");
         signOutButton.addActionListener(e -> {
             frame.dispose();
@@ -62,6 +69,12 @@ public class ManagementDashboard {
 
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonsPanel.setOpaque(false);
+        
+        // Only show "Manage Users" button if the user is an admin
+        if ("admin".equalsIgnoreCase(this.role)) {
+            buttonsPanel.add(manageUsersButton);
+        }
+        
         buttonsPanel.add(createEventButton);
         buttonsPanel.add(signOutButton);
         
@@ -71,14 +84,18 @@ public class ManagementDashboard {
         return headerPanel;
     }
 
-    private void loadAllEvents() {
+    private void loadVisibleEvents() {
         eventsPanel.removeAll(); // Clear existing cards before loading
         try {
             String content = new String(Files.readAllBytes(Paths.get("data/events.json")));
             JSONArray allEvents = new JSONArray(content);
             
             for (int i = 0; i < allEvents.length(); i++) {
-                eventsPanel.add(createEventCard(allEvents.getJSONObject(i)));
+                JSONObject event = allEvents.getJSONObject(i);
+                // If user is admin, show all. If management, show only their own.
+                if ("admin".equalsIgnoreCase(this.role) || this.username.equals(event.optString("createdBy"))) {
+                    eventsPanel.add(createEventCard(event));
+                }
             }
 
         } catch (IOException e) {
@@ -117,7 +134,7 @@ public class ManagementDashboard {
         JButton updateButton = new JButton("Update");
         updateButton.addActionListener(e -> {
             frame.dispose();
-            new UpdateEventForm(event);
+            new UpdateEventForm(event, this.username, this.role);
         });
 
         boolean isCancelled = event.optBoolean("cancelled", false);
@@ -174,7 +191,7 @@ public class ManagementDashboard {
         boolean currentStatus = event.optBoolean("registration_open", false);
         event.put("registration_open", !currentStatus);
         updateEventInJson(event);
-        loadAllEvents(); // Refresh the dashboard to show changes
+        loadVisibleEvents(); // Refresh the dashboard to show changes
     }
     
     private void cancelEvent(JSONObject event) {
@@ -183,7 +200,7 @@ public class ManagementDashboard {
             event.put("cancelled", true);
             event.put("registration_open", false);
             updateEventInJson(event);
-            loadAllEvents(); // Refresh the dashboard
+            loadVisibleEvents(); // Refresh the dashboard
         }
     }
 }

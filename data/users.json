@@ -16,5 +16,23 @@
         "role": "management",
         "fullname": "Kusuma",
         "username": "kusumawati"
+    },
+    {
+        "password": "bhai",
+        "role": "management",
+        "fullname": "Saddam Hussein",
+        "username": "saddam"
+    },
+    {
+        "password": "daniel",
+        "role": "admin",
+        "fullname": "Ahmad",
+        "username": "ahmad"
+    },
+    {
+        "password": "ooad",
+        "role": "student",
+        "fullname": "Rasyidah",
+        "username": "rasyidah"
     }
 ]

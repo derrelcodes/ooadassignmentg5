@@ -24,8 +24,12 @@ public class LoginForm {
         loginBtn.addActionListener(e -> {
             if (validateUser(usernameField.getText(), new String(passwordField.getPassword()), role)) {
                 frame.dispose();
-                if (role.equals("student")) new StudentDashboard(usernameField.getText());
-                else new ManagementDashboard(usernameField.getText());
+                if (role.equals("student")) {
+                    new StudentDashboard(usernameField.getText());
+                } else {
+                    // Pass both username and role to the dashboard
+                    new ManagementDashboard(usernameField.getText(), role);
+                }
             } else {
                 JOptionPane.showMessageDialog(frame, "Invalid credentials or role");
             }
