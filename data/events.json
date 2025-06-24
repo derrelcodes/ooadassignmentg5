@@ -28,7 +28,7 @@
         "name": "Python AI Workshop",
         "cancelled": false,
         "type": "Workshop",
-        "registration_open": true,
+        "registration_open": false,
         "capacity": 30,
         "participants": [
             {"username": "user1"},
@@ -83,7 +83,7 @@
         "name": "Sports Fiesta",
         "base_price": 20,
         "cancelled": false,
-        "registration_open": true,
+        "registration_open": false,
         "provides_food": true,
         "provides_transportation": false,
         "participants": [{"username": "pharthurocks"}]
