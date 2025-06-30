@@ -12,7 +12,7 @@ import java.io.FileWriter;
 public class UpdateEventForm {
     private JFrame frame;
     private String username;
-    private String role; // Add role
+    private String role;
     private JSONObject eventToUpdate;
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
@@ -27,7 +27,6 @@ public class UpdateEventForm {
     private JCheckBox provideFoodCheckBox, provideTransportCheckBox;
     private JTextField transportFeeField, earlyBirdPriceField, earlyBirdLimitField, normalPriceField;
 
-    // Update the constructor
     public UpdateEventForm(JSONObject event, String username, String role) {
         this.eventToUpdate = event;
         this.username = username;
@@ -43,7 +42,7 @@ public class UpdateEventForm {
 
         mainPanel.add(part1Panel, "Part1");
         mainPanel.add(part2Panel, "Part2");
-        
+
         populateFields();
 
         frame.add(mainPanel);
@@ -56,7 +55,7 @@ public class UpdateEventForm {
         venueField.setText(eventToUpdate.optString("venue"));
         typeComboBox.setSelectedItem(eventToUpdate.optString("type"));
         capacityField.setText(String.valueOf(eventToUpdate.optInt("capacity")));
-        
+
         try {
             dateSpinner.setValue(new SimpleDateFormat("yyyy-MM-dd").parse(eventToUpdate.optString("date")));
             startTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("start_time")));
@@ -71,15 +70,15 @@ public class UpdateEventForm {
         hasFeeCheckBox.setSelected(eventToUpdate.optBoolean("has_fee"));
         provideFoodCheckBox.setSelected(eventToUpdate.optBoolean("provides_food"));
         provideTransportCheckBox.setSelected(eventToUpdate.optBoolean("provides_transportation"));
-        
+
         transportFeeField.setText(String.valueOf(eventToUpdate.optDouble("transport_fee")));
         normalPriceField.setText(String.valueOf(eventToUpdate.optDouble("base_price")));
         earlyBirdPriceField.setText(String.valueOf(eventToUpdate.optDouble("early_bird_price")));
         earlyBirdLimitField.setText(String.valueOf(eventToUpdate.optInt("early_bird_limit")));
-        
+
         toggleFeeFields();
     }
-    
+
     private JPanel createPart1Panel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Update Event (Part 1 of 2)"));
@@ -98,7 +97,7 @@ public class UpdateEventForm {
         nameField = new JTextField(20); gbc.gridy = 0; panel.add(nameField, gbc);
         typeComboBox = new JComboBox<>(new String[]{"Seminar", "Workshop", "Cultural", "Sports"}); gbc.gridy = 1; panel.add(typeComboBox, gbc);
         venueField = new JTextField(20); gbc.gridy = 2; panel.add(venueField, gbc);
-        
+
         dateSpinner = new JSpinner(new SpinnerDateModel());
         dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
         gbc.gridy = 3; panel.add(dateSpinner, gbc);
@@ -110,29 +109,35 @@ public class UpdateEventForm {
         endTimeSpinner = new JSpinner(new SpinnerDateModel());
         endTimeSpinner.setEditor(new JSpinner.DateEditor(endTimeSpinner, "HH:mm"));
         gbc.gridy = 5; panel.add(endTimeSpinner, gbc);
-        
+
         capacityField = new JTextField(5); gbc.gridy = 6; panel.add(capacityField, gbc);
-        
+
         gbc.gridy = 7; gbc.gridwidth = 2;
         outsideMmuCheckBox = new JCheckBox("Is the venue located outside MMU?"); panel.add(outsideMmuCheckBox, gbc);
-        
+
         gbc.gridy = 8;
         hasFeeCheckBox = new JCheckBox("Does the event have registration fees?"); panel.add(hasFeeCheckBox, gbc);
-        
+
         gbc.gridy = 9; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("CANCEL");
-        // FIX: Call the correct constructor
-        backButton.addActionListener(e -> { frame.dispose(); new ManagementDashboard(this.username, this.role); });
+        backButton.addActionListener(e -> {
+            frame.dispose();
+            if ("admin".equals(this.role)) {
+                new AdminDashboard(this.username);
+            } else {
+                new ManagementDashboard(this.username);
+            }
+        });
         JButton nextButton = new JButton("NEXT");
         nextButton.addActionListener(e -> cardLayout.show(mainPanel, "Part2"));
         buttonPanel.add(backButton);
         buttonPanel.add(nextButton);
         panel.add(buttonPanel, gbc);
-        
+
         return panel;
     }
-    
+
     private JPanel createPart2Panel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Update Event (Part 2 of 2)"));
@@ -140,27 +145,27 @@ public class UpdateEventForm {
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-        
+
         gbc.gridwidth = 2; gbc.gridx = 0;
         provideFoodCheckBox = new JCheckBox("Is food provided for participants?"); gbc.gridy = 0; panel.add(provideFoodCheckBox, gbc);
         provideTransportCheckBox = new JCheckBox("Is transportation provided for participants?"); gbc.gridy = 1; panel.add(provideTransportCheckBox, gbc);
-        
+
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy = 2; panel.add(new JLabel("Transportation Fee:"), gbc);
         transportFeeField = new JTextField(); gbc.gridx = 1; panel.add(transportFeeField, gbc);
-        
+
         gbc.gridx = 0; gbc.gridy = 3; panel.add(new JLabel("Normal Price:"), gbc);
         normalPriceField = new JTextField(); gbc.gridx = 1; panel.add(normalPriceField, gbc);
-        
+
         gbc.gridx = 0; gbc.gridy = 4; panel.add(new JLabel("Early Bird Price:"), gbc);
         earlyBirdPriceField = new JTextField(); gbc.gridx = 1; panel.add(earlyBirdPriceField, gbc);
-        
+
         gbc.gridx = 0; gbc.gridy = 5; panel.add(new JLabel("Early Bird Pax Limit:"), gbc);
         earlyBirdLimitField = new JTextField(); gbc.gridx = 1; panel.add(earlyBirdLimitField, gbc);
-        
+
         hasFeeCheckBox.addActionListener(e -> toggleFeeFields());
         provideTransportCheckBox.addActionListener(e -> toggleFeeFields());
-        
+
         gbc.gridy = 6; gbc.gridx = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("BACK");
@@ -170,7 +175,7 @@ public class UpdateEventForm {
         buttonPanel.add(backButton);
         buttonPanel.add(continueButton);
         panel.add(buttonPanel, gbc);
-        
+
         return panel;
     }
 
@@ -179,11 +184,11 @@ public class UpdateEventForm {
         normalPriceField.setEnabled(feesEnabled);
         earlyBirdPriceField.setEnabled(feesEnabled);
         earlyBirdLimitField.setEnabled(feesEnabled);
-        
+
         boolean transportEnabled = provideTransportCheckBox.isSelected();
         transportFeeField.setEnabled(transportEnabled);
     }
-    
+
     private void saveUpdatedEvent() {
         try {
             eventToUpdate.put("name", nameField.getText());
@@ -215,8 +220,11 @@ public class UpdateEventForm {
 
             JOptionPane.showMessageDialog(frame, "Event updated successfully!");
             frame.dispose();
-            // FIX: Call the correct constructor
-            new ManagementDashboard(this.username, this.role);
+            if ("admin".equals(this.role)) {
+                new AdminDashboard(this.username);
+            } else {
+                new ManagementDashboard(this.username);
+            }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(frame, "Error updating event: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
