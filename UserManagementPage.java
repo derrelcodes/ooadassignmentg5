@@ -36,7 +36,7 @@ public class UserManagementPage {
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton createUserButton = new JButton("Create User");
         JButton deleteUserButton = new JButton("Delete Selected User");
-        
+
         footerPanel.add(createUserButton);
         footerPanel.add(deleteUserButton);
         frame.add(footerPanel, BorderLayout.SOUTH);
@@ -70,9 +70,21 @@ public class UserManagementPage {
         String username = JOptionPane.showInputDialog(frame, "Enter Username:");
         if (username == null || username.trim().isEmpty()) return;
 
+        // Check if username already exists
+        for (int i = 0; i < users.length(); i++) {
+            if (users.getJSONObject(i).getString("username").equalsIgnoreCase(username)) {
+                JOptionPane.showMessageDialog(frame, "Username already exists.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
         String fullname = JOptionPane.showInputDialog(frame, "Enter Full Name:");
+        if (fullname == null) return;
+
         String password = JOptionPane.showInputDialog(frame, "Enter Password:");
-        String[] roles = {"student", "management", "admin"};
+        if (password == null) return;
+
+        String[] roles = {"Student", "Management", "Admin"};
         String role = (String) JOptionPane.showInputDialog(frame, "Select Role:", "Create User",
                 JOptionPane.QUESTION_MESSAGE, null, roles, roles[0]);
 
@@ -98,16 +110,31 @@ public class UserManagementPage {
                 "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
+            // Remove from the in-memory list
             users.remove(selectedRow);
+            // Save the updated list and refresh the table
             saveUsersToFile();
         }
     }
 
+    // --- THIS METHOD HAS BEEN UPDATED ---
     private void saveUsersToFile() {
+        // Save the updated list to the JSON file
         try (FileWriter writer = new FileWriter("data/users.json")) {
             writer.write(users.toString(4));
             JOptionPane.showMessageDialog(frame, "User data updated successfully.");
-            loadUsers();
+
+            // Refresh the JTable's view from the updated in-memory 'users' list
+            // This avoids re-reading from the file and ensures the UI is in sync
+            tableModel.setRowCount(0); // Clear the existing table data
+            for (int i = 0; i < users.length(); i++) {
+                JSONObject user = users.getJSONObject(i);
+                tableModel.addRow(new Object[]{
+                        user.getString("username"),
+                        user.getString("fullname"),
+                        user.getString("role")
+                });
+            }
         } catch (IOException e) {
             JOptionPane.showMessageDialog(frame, "Error saving user data.", "Error", JOptionPane.ERROR_MESSAGE);
         }

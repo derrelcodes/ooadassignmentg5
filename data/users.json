@@ -6,25 +6,25 @@
         "username": "derrel"
     },
     {
-        "password": "kadavul",
+        "password": "aisyah",
         "role": "student",
-        "fullname": "Pharthiban",
-        "username": "pharthurocks"
+        "fullname": "Aisyah",
+        "username": "aisyah"
     },
     {
-        "password": "bipolar",
+        "password": "saddam",
         "role": "management",
-        "fullname": "Kusuma",
-        "username": "kusumawati"
+        "fullname": "Saddam",
+        "username": "saddam"
     },
     {
-        "password": "daniel",
-        "role": "admin",
-        "fullname": "Ahmad",
-        "username": "ahmad"
+        "password": "suhash",
+        "role": "student",
+        "fullname": "Suhash",
+        "username": "suhash"
     },
     {
-        "password": "ooad",
+        "password": "rasyidah",
         "role": "student",
         "fullname": "Rasyidah",
         "username": "rasyidah"
@@ -40,5 +40,11 @@
         "role": "management",
         "fullname": "Zaki",
         "username": "zaki"
+    },
+    {
+        "password": "omar",
+        "role": "Management",
+        "fullname": "Omar",
+        "username": "omar"
     }
 ]
