@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,6 +14,8 @@ public class FeeCalculationPage {
     private JSONObject event;
     private String username;
     private Map<String, String> userDetails;
+    // ADDED: To store the correctly calculated final price
+    private double finalPrice;
 
     public FeeCalculationPage(String username, JSONObject event, Map<String, String> userDetails) {
         this.username = username;
@@ -25,42 +28,35 @@ public class FeeCalculationPage {
         frame.setLayout(new BorderLayout(10, 10));
         frame.setLocationRelativeTo(null);
         
-        // --- Fee Calculation Logic ---
-        double basePrice = 0;
+        // --- UPDATED: Fee Calculation Logic ---
+        double basePrice = event.optDouble("base_price", 0);
         double earlyBirdDiscount = 0;
+        
         int currentParticipants = event.getJSONArray("participants").length();
         int earlyBirdLimit = event.optInt("early_bird_limit", 0);
-
         double earlyBirdPrice = event.optDouble("early_bird_price", 0);
-        double normalPrice = event.optDouble("base_price", 0);
 
+        // The discount is applicable if the number of current participants is LESS than the limit.
+        // e.g., if limit is 2, participants 0 and 1 get the discount.
         if (currentParticipants < earlyBirdLimit && earlyBirdPrice > 0) {
-            basePrice = normalPrice; // Base price is the normal price
-            earlyBirdDiscount = normalPrice - earlyBirdPrice; // Discount is the difference
-        } else {
-            basePrice = normalPrice;
+            earlyBirdDiscount = basePrice - earlyBirdPrice;
         }
 
         boolean needsTransport = userDetails.get("needsTransport").equalsIgnoreCase("Yes");
         double transportFee = needsTransport ? event.optDouble("transport_fee", 0) : 0;
         
         double totalBeforeDiscount = basePrice + transportFee;
-        double finalPrice = totalBeforeDiscount - earlyBirdDiscount;
+        // UPDATED: Use the class member to store the final price
+        this.finalPrice = totalBeforeDiscount - earlyBirdDiscount;
 
         // --- UI Creation ---
-        // Main panel with two columns
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 20, 20));
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         
-        // Left Panel: Breakdown
-        mainPanel.add(createBreakdownPanel(basePrice, transportFee, earlyBirdDiscount, totalBeforeDiscount, finalPrice));
-        
-        // Right Panel: Amount to Pay & Actions
-        mainPanel.add(createActionPanel(finalPrice));
+        mainPanel.add(createBreakdownPanel(basePrice, transportFee, earlyBirdDiscount, totalBeforeDiscount, this.finalPrice));
+        mainPanel.add(createActionPanel(this.finalPrice));
 
         frame.add(mainPanel, BorderLayout.CENTER);
-        
-        // Footer Panel
         frame.add(createFooterPanel(), BorderLayout.SOUTH);
 
         frame.setVisible(true);
@@ -128,7 +124,6 @@ public class FeeCalculationPage {
         JButton backButton = new JButton("BACK");
         backButton.addActionListener(e -> {
             frame.dispose();
-            // Go back to the registration form, passing the details back
             new RegistrationForm(username, event); 
         });
 
@@ -149,6 +144,8 @@ public class FeeCalculationPage {
                 JSONObject ev = events.getJSONObject(i);
                 if (ev.getString("event_id").equals(event.getString("event_id"))) {
                     ev.getJSONArray("participants").put(new JSONObject().put("username", username));
+                    // Update the original event object in memory as well
+                    this.event = ev;
                     break;
                 }
             }
@@ -156,7 +153,7 @@ public class FeeCalculationPage {
                 writer.write(events.toString(4));
             }
 
-            // 2. Create new record in registrations.json with all details
+            // 2. Create new record in registrations.json
             JSONArray registrations = new JSONArray();
             try {
                 registrations = new JSONArray(new String(Files.readAllBytes(Paths.get("data/registrations.json"))));
@@ -164,11 +161,12 @@ public class FeeCalculationPage {
             }
 
             JSONObject newRegistration = new JSONObject();
-            newRegistration.put("username", username); // The logged-in user
+            newRegistration.put("username", username);
             newRegistration.put("event_id", event.getString("event_id"));
-            newRegistration.put("booking_date", java.time.LocalDate.now().toString());
             
-            // Add all the new details from the form
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            newRegistration.put("booking_date", java.time.LocalDate.now().format(formatter));
+            
             newRegistration.put("fullName", userDetails.get("fullName"));
             newRegistration.put("studentId", userDetails.get("studentId"));
             newRegistration.put("contact", userDetails.get("contact"));
@@ -176,12 +174,8 @@ public class FeeCalculationPage {
             newRegistration.put("dietary", userDetails.get("dietary"));
             newRegistration.put("transport", userDetails.get("needsTransport"));
             
-            // Recalculate final price for saving
-            double earlyBirdPrice = event.optDouble("early_bird_price", 0);
-            double normalPrice = event.optDouble("base_price", 0);
-            double basePrice = (events.getJSONObject(0).getJSONArray("participants").length() < event.optInt("early_bird_limit", 0) && earlyBirdPrice > 0) ? earlyBirdPrice : normalPrice;
-            double transportFee = userDetails.get("needsTransport").equalsIgnoreCase("Yes") ? event.optDouble("transport_fee", 0) : 0;
-            newRegistration.put("paid_amount", basePrice + transportFee);
+            // UPDATED: Use the correctly calculated final price from the class member
+            newRegistration.put("paid_amount", this.finalPrice);
 
             registrations.put(newRegistration);
 

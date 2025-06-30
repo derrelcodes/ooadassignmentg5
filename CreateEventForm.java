@@ -74,7 +74,8 @@ public class CreateEventForm {
         venueField = new JTextField(20); gbc.gridy = 2; panel.add(venueField, gbc);
 
         dateSpinner = new JSpinner(new SpinnerDateModel());
-        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
+        // UPDATED LINE
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "dd/MM/yyyy"));
         gbc.gridy = 3; panel.add(dateSpinner, gbc);
 
         startTimeSpinner = new JSpinner(new SpinnerDateModel());
@@ -179,7 +180,8 @@ public class CreateEventForm {
             newEvent.put("name", nameField.getText());
             newEvent.put("type", (String) typeComboBox.getSelectedItem());
             newEvent.put("venue", venueField.getText());
-            newEvent.put("date", new SimpleDateFormat("yyyy-MM-dd").format((Date) dateSpinner.getValue()));
+            // UPDATED LINE
+            newEvent.put("date", new SimpleDateFormat("dd/MM/yyyy").format((Date) dateSpinner.getValue()));
             newEvent.put("start_time", new SimpleDateFormat("HH:mm").format((Date) startTimeSpinner.getValue()));
             newEvent.put("end_time", new SimpleDateFormat("HH:mm").format((Date) endTimeSpinner.getValue()));
             newEvent.put("capacity", Integer.parseInt(capacityField.getText()));

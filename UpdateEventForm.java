@@ -57,13 +57,15 @@ public class UpdateEventForm {
         capacityField.setText(String.valueOf(eventToUpdate.optInt("capacity")));
 
         try {
-            dateSpinner.setValue(new SimpleDateFormat("yyyy-MM-dd").parse(eventToUpdate.optString("date")));
+            // UPDATED LINE
+            dateSpinner.setValue(new SimpleDateFormat("dd/MM/yyyy").parse(eventToUpdate.optString("date")));
             startTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("start_time")));
             endTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("end_time")));
         } catch (Exception e) {
             dateSpinner.setValue(new Date());
             startTimeSpinner.setValue(new Date());
             endTimeSpinner.setValue(new Date());
+            e.printStackTrace();
         }
 
         outsideMmuCheckBox.setSelected(eventToUpdate.optBoolean("outside_mmu"));
@@ -99,7 +101,8 @@ public class UpdateEventForm {
         venueField = new JTextField(20); gbc.gridy = 2; panel.add(venueField, gbc);
 
         dateSpinner = new JSpinner(new SpinnerDateModel());
-        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
+        // UPDATED LINE
+        dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "dd/MM/yyyy"));
         gbc.gridy = 3; panel.add(dateSpinner, gbc);
 
         startTimeSpinner = new JSpinner(new SpinnerDateModel());
@@ -194,7 +197,8 @@ public class UpdateEventForm {
             eventToUpdate.put("name", nameField.getText());
             eventToUpdate.put("type", typeComboBox.getSelectedItem());
             eventToUpdate.put("venue", venueField.getText());
-            eventToUpdate.put("date", new SimpleDateFormat("yyyy-MM-dd").format((Date) dateSpinner.getValue()));
+            // UPDATED LINE
+            eventToUpdate.put("date", new SimpleDateFormat("dd/MM/yyyy").format((Date) dateSpinner.getValue()));
             eventToUpdate.put("start_time", new SimpleDateFormat("HH:mm").format((Date) startTimeSpinner.getValue()));
             eventToUpdate.put("end_time", new SimpleDateFormat("HH:mm").format((Date) endTimeSpinner.getValue()));
             eventToUpdate.put("capacity", Integer.parseInt(capacityField.getText()));

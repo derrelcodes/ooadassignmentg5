@@ -1,9 +1,6 @@
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,18 +24,14 @@ public class StudentDashboard {
         frame.setLayout(new BorderLayout(10, 10));
         frame.setLocationRelativeTo(null);
 
-        // Header Panel
-        JPanel headerPanel = createHeaderPanel();
-        frame.add(headerPanel, BorderLayout.NORTH);
+        frame.add(createHeaderPanel(), BorderLayout.NORTH);
 
-        // Main content panel with scroll pane
         eventsPanel = new JPanel();
-        eventsPanel.setLayout(new GridLayout(0, 3, 15, 15)); // Grid layout for cards
+        eventsPanel.setLayout(new GridLayout(0, 3, 15, 15));
         eventsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         
         JScrollPane scrollPane = new JScrollPane(eventsPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // UPDATED LINE
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
         frame.add(scrollPane, BorderLayout.CENTER);
@@ -79,29 +72,31 @@ public class StudentDashboard {
     }
 
     private void loadActiveEvents() {
+        eventsPanel.removeAll();
         try {
             String content = new String(Files.readAllBytes(Paths.get("data/events.json")));
             JSONArray allEvents = new JSONArray(content);
             List<JSONObject> activeEvents = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            // Filter for active events
             for (int i = 0; i < allEvents.length(); i++) {
                 JSONObject event = allEvents.getJSONObject(i);
-                LocalDate eventDate = LocalDate.parse(event.getString("date"), DateTimeFormatter.ISO_LOCAL_DATE);
+                LocalDate eventDate = LocalDate.parse(event.getString("date"), formatter);
                 if (!event.optBoolean("cancelled", false) && eventDate.isAfter(LocalDate.now().minusDays(1))) {
                     activeEvents.add(event);
                 }
             }
             
-            // Create a card for each active event
             for (JSONObject event : activeEvents) {
                 eventsPanel.add(createEventCard(event));
             }
 
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(frame, "Failed to load events from file.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Failed to load events from file. Ensure dates in events.json are in dd/MM/yyyy format.", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
+        eventsPanel.revalidate();
+        eventsPanel.repaint();
     }
 
     private JPanel createEventCard(JSONObject event) {
@@ -112,12 +107,10 @@ public class StudentDashboard {
         ));
         card.setBackground(Color.WHITE);
 
-        // Top section with event type
         JLabel eventTypeLabel = new JLabel(event.optString("type", "EVENT").toUpperCase());
         eventTypeLabel.setFont(new Font("Arial", Font.BOLD, 12));
         eventTypeLabel.setForeground(new Color(100, 100, 100));
         
-        // Center section with event details
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setOpaque(false);
@@ -134,21 +127,23 @@ public class StudentDashboard {
         String priceText = event.optBoolean("has_fee", false) ? "Price: RM " + String.format("%.2f", event.optDouble("base_price")) : "Price: Free";
         detailsPanel.add(new JLabel(priceText));
 
-        if (event.optInt("early_bird_limit", 0) > 0) {
+        // --- UPDATED: Early Bird Status Logic ---
+        int earlyBirdLimit = event.optInt("early_bird_limit", 0);
+        int participantCount = event.getJSONArray("participants").length();
+
+        // Only show the "Available" text if the limit exists and has not been reached
+        if (earlyBirdLimit > 0 && participantCount < earlyBirdLimit) {
             JLabel earlyBirdLabel = new JLabel("Early Bird Discount: Available");
             earlyBirdLabel.setFont(new Font("Arial", Font.ITALIC, 12));
             earlyBirdLabel.setForeground(new Color(0, 128, 0));
             detailsPanel.add(earlyBirdLabel);
         }
 
-        // Bottom section with register button
         JButton registerButton = new JButton("REGISTER");
         registerButton.setFont(new Font("Arial", Font.BOLD, 12));
         
-        // Determine button state based on event status
         boolean registrationOpen = event.optBoolean("registration_open", false);
         int capacity = event.getInt("capacity");
-        int participantCount = event.getJSONArray("participants").length();
         boolean isFull = participantCount >= capacity;
         
         if (!registrationOpen) {

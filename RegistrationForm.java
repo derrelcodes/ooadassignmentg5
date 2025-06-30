@@ -23,13 +23,8 @@ public class RegistrationForm {
         frame.setLayout(new BorderLayout(10, 10));
         frame.setLocationRelativeTo(null);
 
-        // Header Panel with Event Details
         frame.add(createHeaderPanel(), BorderLayout.NORTH);
-
-        // Center Panel with Registration Form
         frame.add(createFormPanel(), BorderLayout.CENTER);
-
-        // Footer Panel with Navigation Buttons
         frame.add(createFooterPanel(), BorderLayout.SOUTH);
 
         frame.setVisible(true);
@@ -59,7 +54,12 @@ public class RegistrationForm {
         headerPanel.add(new JLabel("Venue: " + event.optString("venue")));
         headerPanel.add(priceLabel);
 
-        if (event.optInt("early_bird_limit", 0) > 0) {
+        // --- THIS LOGIC HAS BEEN UPDATED ---
+        int earlyBirdLimit = event.optInt("early_bird_limit", 0);
+        int participantCount = event.getJSONArray("participants").length();
+
+        // Only show the "Available" text if the limit exists and has not been reached
+        if (earlyBirdLimit > 0 && participantCount < earlyBirdLimit) {
             JLabel earlyBirdLabel = new JLabel("Early Bird Discount: Available");
             earlyBirdLabel.setFont(new Font("Arial", Font.ITALIC, 12));
             earlyBirdLabel.setForeground(Color.BLUE);
