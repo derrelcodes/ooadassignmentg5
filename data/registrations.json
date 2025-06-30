@@ -30,5 +30,17 @@
         "transport": "No",
         "email": "pharthiban@gmail.com",
         "username": "pharthurocks"
+    },
+    {
+        "studentId": "1211107055",
+        "event_id": "EVT-A821DCBC",
+        "dietary": "Non-Vegetarian",
+        "booking_date": "2025-06-25",
+        "contact": "0172834245",
+        "paid_amount": 20,
+        "fullName": "Derrel",
+        "transport": "No",
+        "email": "d@gmail.com",
+        "username": "pharthurocks"
     }
 ]

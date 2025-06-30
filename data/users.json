@@ -18,12 +18,6 @@
         "username": "kusumawati"
     },
     {
-        "password": "bhai",
-        "role": "management",
-        "fullname": "Saddam Hussein",
-        "username": "saddam"
-    },
-    {
         "password": "daniel",
         "role": "admin",
         "fullname": "Ahmad",
@@ -40,5 +34,11 @@
         "role": "admin",
         "fullname": "OOAD",
         "username": "ooad"
+    },
+    {
+        "password": "zaki",
+        "role": "management",
+        "fullname": "Zaki",
+        "username": "zaki"
     }
 ]
