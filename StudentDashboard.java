@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -92,13 +93,14 @@ public class StudentDashboard {
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(frame, "Failed to load events from file. Ensure dates in events.json are in dd/MM/yyyy format.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Failed to load events from file.", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
         eventsPanel.revalidate();
         eventsPanel.repaint();
     }
 
+    // --- THIS METHOD HAS BEEN UPDATED ---
     private JPanel createEventCard(JSONObject event) {
         JPanel card = new JPanel(new BorderLayout(10, 10));
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -107,14 +109,16 @@ public class StudentDashboard {
         ));
         card.setBackground(Color.WHITE);
 
-        JLabel eventTypeLabel = new JLabel(event.optString("type", "EVENT").toUpperCase());
-        eventTypeLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        eventTypeLabel.setForeground(new Color(100, 100, 100));
-        
+        // Details Panel (Top)
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setOpaque(false);
-
+        
+        JLabel eventTypeLabel = new JLabel(event.optString("type", "EVENT").toUpperCase());
+        eventTypeLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        eventTypeLabel.setForeground(new Color(100, 100, 100));
+        detailsPanel.add(eventTypeLabel);
+        
         JLabel eventNameLabel = new JLabel(event.optString("name", "Event Name"));
         eventNameLabel.setFont(new Font("Arial", Font.BOLD, 16));
         detailsPanel.add(eventNameLabel);
@@ -126,19 +130,30 @@ public class StudentDashboard {
         
         String priceText = event.optBoolean("has_fee", false) ? "Price: RM " + String.format("%.2f", event.optDouble("base_price")) : "Price: Free";
         detailsPanel.add(new JLabel(priceText));
-
-        // --- UPDATED: Early Bird Status Logic ---
+        
         int earlyBirdLimit = event.optInt("early_bird_limit", 0);
         int participantCount = event.getJSONArray("participants").length();
-
-        // Only show the "Available" text if the limit exists and has not been reached
         if (earlyBirdLimit > 0 && participantCount < earlyBirdLimit) {
             JLabel earlyBirdLabel = new JLabel("Early Bird Discount: Available");
             earlyBirdLabel.setFont(new Font("Arial", Font.ITALIC, 12));
             earlyBirdLabel.setForeground(new Color(0, 128, 0));
             detailsPanel.add(earlyBirdLabel);
         }
+        
+        // Poster Panel (Center)
+        JLabel posterLabel = new JLabel();
+        posterLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        posterLabel.setVerticalAlignment(SwingConstants.CENTER);
+        String posterPath = event.optString("poster_path");
+        if (posterPath != null && !posterPath.isEmpty() && new File(posterPath).exists()) {
+            ImageIcon imageIcon = new ImageIcon(posterPath);
+            Image image = imageIcon.getImage().getScaledInstance(200, 120, Image.SCALE_SMOOTH);
+            posterLabel.setIcon(new ImageIcon(image));
+        } else {
+            posterLabel.setText("No Poster Available");
+        }
 
+        // Register Button (Bottom)
         JButton registerButton = new JButton("REGISTER");
         registerButton.setFont(new Font("Arial", Font.BOLD, 12));
         
@@ -159,8 +174,8 @@ public class StudentDashboard {
             });
         }
         
-        card.add(eventTypeLabel, BorderLayout.NORTH);
-        card.add(detailsPanel, BorderLayout.CENTER);
+        card.add(detailsPanel, BorderLayout.NORTH);
+        card.add(posterLabel, BorderLayout.CENTER);
         card.add(registerButton, BorderLayout.SOUTH);
         
         return card;

@@ -14,7 +14,6 @@ public class FeeCalculationPage {
     private JSONObject event;
     private String username;
     private Map<String, String> userDetails;
-    // ADDED: To store the correctly calculated final price
     private double finalPrice;
 
     public FeeCalculationPage(String username, JSONObject event, Map<String, String> userDetails) {
@@ -27,32 +26,25 @@ public class FeeCalculationPage {
         frame.setSize(600, 400);
         frame.setLayout(new BorderLayout(10, 10));
         frame.setLocationRelativeTo(null);
-        
-        // --- UPDATED: Fee Calculation Logic ---
+
         double basePrice = event.optDouble("base_price", 0);
         double earlyBirdDiscount = 0;
-        
         int currentParticipants = event.getJSONArray("participants").length();
         int earlyBirdLimit = event.optInt("early_bird_limit", 0);
         double earlyBirdPrice = event.optDouble("early_bird_price", 0);
 
-        // The discount is applicable if the number of current participants is LESS than the limit.
-        // e.g., if limit is 2, participants 0 and 1 get the discount.
         if (currentParticipants < earlyBirdLimit && earlyBirdPrice > 0) {
             earlyBirdDiscount = basePrice - earlyBirdPrice;
         }
 
         boolean needsTransport = userDetails.get("needsTransport").equalsIgnoreCase("Yes");
         double transportFee = needsTransport ? event.optDouble("transport_fee", 0) : 0;
-        
         double totalBeforeDiscount = basePrice + transportFee;
-        // UPDATED: Use the class member to store the final price
         this.finalPrice = totalBeforeDiscount - earlyBirdDiscount;
 
-        // --- UI Creation ---
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 20, 20));
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        
+
         mainPanel.add(createBreakdownPanel(basePrice, transportFee, earlyBirdDiscount, totalBeforeDiscount, this.finalPrice));
         mainPanel.add(createActionPanel(this.finalPrice));
 
@@ -77,25 +69,27 @@ public class FeeCalculationPage {
         panel.add(Box.createVerticalStrut(10));
         panel.add(new JLabel("Total Before Discount: RM " + String.format("%.2f", totalBefore)));
         panel.add(Box.createVerticalStrut(10));
-        
+
         JLabel totalAfterLabel = new JLabel("Total After Discount: RM " + String.format("%.2f", totalAfter));
         totalAfterLabel.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(totalAfterLabel);
-        
+
         return panel;
     }
 
     private JPanel createActionPanel(double finalPrice) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("PAYMENT DETAILS"));
-        
+
         JLabel amountLabel = new JLabel("AMOUNT TO BE PAID");
         amountLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        amountLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
+        // UPDATED: Align text to the left
+        amountLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
         JLabel priceLabel = new JLabel("RM " + String.format("%.2f", finalPrice));
         priceLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        priceLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        // UPDATED: Align text to the left
+        priceLabel.setHorizontalAlignment(SwingConstants.LEFT);
         priceLabel.setForeground(Color.BLUE);
 
         JTextArea instructions = new JTextArea();
@@ -113,6 +107,12 @@ public class FeeCalculationPage {
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(instructions);
 
+        // UPDATED: Align the components themselves to the left within the layout
+        amountLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        instructions.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+
         panel.add(centerPanel, BorderLayout.CENTER);
         return panel;
     }
@@ -124,27 +124,25 @@ public class FeeCalculationPage {
         JButton backButton = new JButton("BACK");
         backButton.addActionListener(e -> {
             frame.dispose();
-            new RegistrationForm(username, event); 
+            new RegistrationForm(username, event);
         });
 
         JButton registerButton = new JButton("REGISTER");
         registerButton.addActionListener(e -> saveRegistration());
-        
+
         footerPanel.add(backButton);
         footerPanel.add(registerButton);
-        
+
         return footerPanel;
     }
 
     private void saveRegistration() {
         try {
-            // 1. Update events.json to add participant
             JSONArray events = new JSONArray(new String(Files.readAllBytes(Paths.get("data/events.json"))));
             for (int i = 0; i < events.length(); i++) {
                 JSONObject ev = events.getJSONObject(i);
                 if (ev.getString("event_id").equals(event.getString("event_id"))) {
                     ev.getJSONArray("participants").put(new JSONObject().put("username", username));
-                    // Update the original event object in memory as well
                     this.event = ev;
                     break;
                 }
@@ -153,28 +151,25 @@ public class FeeCalculationPage {
                 writer.write(events.toString(4));
             }
 
-            // 2. Create new record in registrations.json
             JSONArray registrations = new JSONArray();
             try {
                 registrations = new JSONArray(new String(Files.readAllBytes(Paths.get("data/registrations.json"))));
-            } catch (Exception ignored) { // File might not exist yet
+            } catch (Exception ignored) {
             }
 
             JSONObject newRegistration = new JSONObject();
             newRegistration.put("username", username);
             newRegistration.put("event_id", event.getString("event_id"));
-            
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             newRegistration.put("booking_date", java.time.LocalDate.now().format(formatter));
-            
+
             newRegistration.put("fullName", userDetails.get("fullName"));
             newRegistration.put("studentId", userDetails.get("studentId"));
             newRegistration.put("contact", userDetails.get("contact"));
             newRegistration.put("email", userDetails.get("email"));
             newRegistration.put("dietary", userDetails.get("dietary"));
             newRegistration.put("transport", userDetails.get("needsTransport"));
-            
-            // UPDATED: Use the correctly calculated final price from the class member
             newRegistration.put("paid_amount", this.finalPrice);
 
             registrations.put(newRegistration);

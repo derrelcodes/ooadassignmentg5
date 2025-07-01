@@ -1,13 +1,16 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.io.FileWriter;
 
 public class UpdateEventForm {
     private JFrame frame;
@@ -17,14 +20,17 @@ public class UpdateEventForm {
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
 
-    // Part 1 fields
+    // --- Part 1 fields ---
     private JTextField nameField, venueField, capacityField;
     private JComboBox<String> typeComboBox;
     private JSpinner dateSpinner, startTimeSpinner, endTimeSpinner;
-    private JCheckBox outsideMmuCheckBox, hasFeeCheckBox;
+    // --- ADDED: Fields for poster replacement ---
+    private JLabel posterFileNameLabel;
+    private File selectedPosterFile;
 
-    // Part 2 fields
-    private JCheckBox provideFoodCheckBox, provideTransportCheckBox;
+
+    // --- Part 2 fields ---
+    private JCheckBox provideFoodCheckBox, provideTransportCheckBox, hasFeeCheckBox;
     private JTextField transportFeeField, earlyBirdPriceField, earlyBirdLimitField, normalPriceField;
 
     public UpdateEventForm(JSONObject event, String username, String role) {
@@ -43,9 +49,8 @@ public class UpdateEventForm {
         mainPanel.add(part1Panel, "Part1");
         mainPanel.add(part2Panel, "Part2");
 
-        populateFields();
-
         frame.add(mainPanel);
+        populateFields();
         cardLayout.show(mainPanel, "Part1");
         frame.setVisible(true);
     }
@@ -57,26 +62,28 @@ public class UpdateEventForm {
         capacityField.setText(String.valueOf(eventToUpdate.optInt("capacity")));
 
         try {
-            // UPDATED LINE
             dateSpinner.setValue(new SimpleDateFormat("dd/MM/yyyy").parse(eventToUpdate.optString("date")));
             startTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("start_time")));
             endTimeSpinner.setValue(new SimpleDateFormat("HH:mm").parse(eventToUpdate.optString("end_time")));
-        } catch (Exception e) {
-            dateSpinner.setValue(new Date());
-            startTimeSpinner.setValue(new Date());
-            endTimeSpinner.setValue(new Date());
-            e.printStackTrace();
+        } catch (Exception e) { /* ... */ }
+
+        // --- ADDED: Display current poster file name ---
+        String currentPosterPath = eventToUpdate.optString("poster_path", "");
+        if (!currentPosterPath.isEmpty()) {
+            posterFileNameLabel.setText(new File(currentPosterPath).getName());
+        } else {
+            posterFileNameLabel.setText("No poster uploaded.");
         }
 
-        outsideMmuCheckBox.setSelected(eventToUpdate.optBoolean("outside_mmu"));
-        hasFeeCheckBox.setSelected(eventToUpdate.optBoolean("has_fee"));
+
         provideFoodCheckBox.setSelected(eventToUpdate.optBoolean("provides_food"));
         provideTransportCheckBox.setSelected(eventToUpdate.optBoolean("provides_transportation"));
+        hasFeeCheckBox.setSelected(eventToUpdate.optBoolean("has_fee"));
 
-        transportFeeField.setText(String.valueOf(eventToUpdate.optDouble("transport_fee")));
-        normalPriceField.setText(String.valueOf(eventToUpdate.optDouble("base_price")));
-        earlyBirdPriceField.setText(String.valueOf(eventToUpdate.optDouble("early_bird_price")));
-        earlyBirdLimitField.setText(String.valueOf(eventToUpdate.optInt("early_bird_limit")));
+        transportFeeField.setText(String.valueOf(eventToUpdate.optDouble("transport_fee", 0.0)));
+        normalPriceField.setText(String.valueOf(eventToUpdate.optDouble("base_price", 0.0)));
+        earlyBirdPriceField.setText(String.valueOf(eventToUpdate.optDouble("early_bird_price", 0.0)));
+        earlyBirdLimitField.setText(String.valueOf(eventToUpdate.optInt("early_bird_limit", 0)));
 
         toggleFeeFields();
     }
@@ -89,19 +96,21 @@ public class UpdateEventForm {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        gbc.gridx = 0; gbc.weightx = 0.3;
-        String[] labels = {"Event Name:", "Type of Event:", "Venue:", "Date:", "Start Time:", "End Time:", "Capacity:"};
+        gbc.gridx = 0;
+        gbc.weightx = 0.3;
+        String[] labels = {"Event Name:", "Type of Event:", "Venue:", "Date:", "Start Time:", "End Time:", "Capacity:", "Event Poster:"};
         for (int i = 0; i < labels.length; i++) {
-            gbc.gridy = i; panel.add(new JLabel(labels[i]), gbc);
+            gbc.gridy = i;
+            panel.add(new JLabel(labels[i]), gbc);
         }
 
-        gbc.gridx = 1; gbc.weightx = 0.7;
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
         nameField = new JTextField(20); gbc.gridy = 0; panel.add(nameField, gbc);
         typeComboBox = new JComboBox<>(new String[]{"Seminar", "Workshop", "Cultural", "Sports"}); gbc.gridy = 1; panel.add(typeComboBox, gbc);
         venueField = new JTextField(20); gbc.gridy = 2; panel.add(venueField, gbc);
 
         dateSpinner = new JSpinner(new SpinnerDateModel());
-        // UPDATED LINE
         dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "dd/MM/yyyy"));
         gbc.gridy = 3; panel.add(dateSpinner, gbc);
 
@@ -114,14 +123,18 @@ public class UpdateEventForm {
         gbc.gridy = 5; panel.add(endTimeSpinner, gbc);
 
         capacityField = new JTextField(5); gbc.gridy = 6; panel.add(capacityField, gbc);
+        
+        // --- UPDATED: Changed button text to "Replace..." ---
+        JPanel posterPanel = new JPanel(new BorderLayout(5, 0));
+        JButton replaceButton = new JButton("Replace...");
+        posterFileNameLabel = new JLabel();
+        posterPanel.add(replaceButton, BorderLayout.WEST);
+        posterPanel.add(posterFileNameLabel, BorderLayout.CENTER);
+        gbc.gridy = 7; panel.add(posterPanel, gbc);
 
-        gbc.gridy = 7; gbc.gridwidth = 2;
-        outsideMmuCheckBox = new JCheckBox("Is the venue located outside MMU?"); panel.add(outsideMmuCheckBox, gbc);
+        replaceButton.addActionListener(e -> selectPosterFile());
 
-        gbc.gridy = 8;
-        hasFeeCheckBox = new JCheckBox("Does the event have registration fees?"); panel.add(hasFeeCheckBox, gbc);
-
-        gbc.gridy = 9; gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridy = 8; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("CANCEL");
         backButton.addActionListener(e -> {
@@ -140,6 +153,22 @@ public class UpdateEventForm {
 
         return panel;
     }
+    
+    // --- This method is now used for replacing the poster ---
+    private void selectPosterFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a New Event Poster");
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files (JPG, PNG, GIF)", "jpg", "png", "gif");
+        fileChooser.addChoosableFileFilter(filter);
+
+        int returnValue = fileChooser.showOpenDialog(frame);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            selectedPosterFile = fileChooser.getSelectedFile();
+            posterFileNameLabel.setText(selectedPosterFile.getName());
+        }
+    }
+
 
     private JPanel createPart2Panel() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -152,44 +181,65 @@ public class UpdateEventForm {
         gbc.gridwidth = 2; gbc.gridx = 0;
         provideFoodCheckBox = new JCheckBox("Is food provided for participants?"); gbc.gridy = 0; panel.add(provideFoodCheckBox, gbc);
         provideTransportCheckBox = new JCheckBox("Is transportation provided for participants?"); gbc.gridy = 1; panel.add(provideTransportCheckBox, gbc);
+        hasFeeCheckBox = new JCheckBox("Does the event have registration fees?"); gbc.gridy = 2; panel.add(hasFeeCheckBox, gbc);
+        panel.add(new JSeparator(), gbc);
 
         gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 2; panel.add(new JLabel("Transportation Fee:"), gbc);
+        gbc.gridy = 3; gbc.gridx = 0; panel.add(new JLabel("Transportation Fee:"), gbc);
         transportFeeField = new JTextField(); gbc.gridx = 1; panel.add(transportFeeField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; panel.add(new JLabel("Normal Price:"), gbc);
+        gbc.gridy = 4; gbc.gridx = 0; panel.add(new JLabel("Normal Price:"), gbc);
         normalPriceField = new JTextField(); gbc.gridx = 1; panel.add(normalPriceField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4; panel.add(new JLabel("Early Bird Price:"), gbc);
+        gbc.gridy = 5; gbc.gridx = 0; panel.add(new JLabel("Early Bird Price:"), gbc);
         earlyBirdPriceField = new JTextField(); gbc.gridx = 1; panel.add(earlyBirdPriceField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5; panel.add(new JLabel("Early Bird Pax Limit:"), gbc);
+        gbc.gridy = 6; gbc.gridx = 0; panel.add(new JLabel("Early Bird Pax Limit:"), gbc);
         earlyBirdLimitField = new JTextField(); gbc.gridx = 1; panel.add(earlyBirdLimitField, gbc);
 
         hasFeeCheckBox.addActionListener(e -> toggleFeeFields());
         provideTransportCheckBox.addActionListener(e -> toggleFeeFields());
 
-        gbc.gridy = 6; gbc.gridx = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridy = 7; gbc.gridx = 0; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.EAST;
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton backButton = new JButton("BACK");
         backButton.addActionListener(e -> cardLayout.show(mainPanel, "Part1"));
-        JButton continueButton = new JButton("UPDATE EVENT");
-        continueButton.addActionListener(e -> saveUpdatedEvent());
+        JButton updateButton = new JButton("UPDATE EVENT");
+        updateButton.addActionListener(e -> saveUpdatedEvent());
         buttonPanel.add(backButton);
-        buttonPanel.add(continueButton);
+        buttonPanel.add(updateButton);
         panel.add(buttonPanel, gbc);
 
         return panel;
     }
 
     private void toggleFeeFields() {
-        boolean feesEnabled = hasFeeCheckBox.isSelected();
-        normalPriceField.setEnabled(feesEnabled);
-        earlyBirdPriceField.setEnabled(feesEnabled);
-        earlyBirdLimitField.setEnabled(feesEnabled);
+        if (provideTransportCheckBox.isSelected()) {
+            transportFeeField.setEditable(true);
+            if (transportFeeField.getText().equals("Not Applicable")) {
+                transportFeeField.setText("0");
+            }
+        } else {
+            transportFeeField.setText("Not Applicable");
+            transportFeeField.setEditable(false);
+        }
 
-        boolean transportEnabled = provideTransportCheckBox.isSelected();
-        transportFeeField.setEnabled(transportEnabled);
+        boolean feesEnabled = hasFeeCheckBox.isSelected();
+        normalPriceField.setEditable(feesEnabled);
+        earlyBirdPriceField.setEditable(feesEnabled);
+        earlyBirdLimitField.setEditable(feesEnabled);
+
+        if (!feesEnabled) {
+            normalPriceField.setText("Not Applicable");
+            earlyBirdPriceField.setText("Not Applicable");
+            earlyBirdLimitField.setText("Not Applicable");
+        } else {
+            if (normalPriceField.getText().equals("Not Applicable")) {
+                normalPriceField.setText("0");
+                earlyBirdPriceField.setText("0");
+                earlyBirdLimitField.setText("0");
+            }
+        }
     }
 
     private void saveUpdatedEvent() {
@@ -197,18 +247,38 @@ public class UpdateEventForm {
             eventToUpdate.put("name", nameField.getText());
             eventToUpdate.put("type", typeComboBox.getSelectedItem());
             eventToUpdate.put("venue", venueField.getText());
-            // UPDATED LINE
             eventToUpdate.put("date", new SimpleDateFormat("dd/MM/yyyy").format((Date) dateSpinner.getValue()));
             eventToUpdate.put("start_time", new SimpleDateFormat("HH:mm").format((Date) startTimeSpinner.getValue()));
             eventToUpdate.put("end_time", new SimpleDateFormat("HH:mm").format((Date) endTimeSpinner.getValue()));
             eventToUpdate.put("capacity", Integer.parseInt(capacityField.getText()));
+
+            // --- UPDATED: Handle poster file replacement ---
+            if (selectedPosterFile != null) {
+                // Delete the old poster if it exists
+                String oldPosterPath = eventToUpdate.optString("poster_path");
+                if (oldPosterPath != null && !oldPosterPath.isEmpty()) {
+                    new File(oldPosterPath).delete();
+                }
+                
+                // Save the new poster
+                File postersDir = new File("data/posters");
+                if (!postersDir.exists()) postersDir.mkdirs();
+                
+                String eventId = eventToUpdate.getString("event_id");
+                String extension = selectedPosterFile.getName().substring(selectedPosterFile.getName().lastIndexOf("."));
+                File destFile = new File(postersDir, eventId + extension);
+                
+                Files.copy(selectedPosterFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                eventToUpdate.put("poster_path", "data/posters/" + destFile.getName());
+            }
+
             eventToUpdate.put("has_fee", hasFeeCheckBox.isSelected());
             eventToUpdate.put("provides_food", provideFoodCheckBox.isSelected());
             eventToUpdate.put("provides_transportation", provideTransportCheckBox.isSelected());
-            eventToUpdate.put("transport_fee", Double.parseDouble(transportFeeField.getText()));
-            eventToUpdate.put("base_price", Double.parseDouble(normalPriceField.getText()));
-            eventToUpdate.put("early_bird_price", Double.parseDouble(earlyBirdPriceField.getText()));
-            eventToUpdate.put("early_bird_limit", Integer.parseInt(earlyBirdLimitField.getText()));
+            eventToUpdate.put("transport_fee", transportFeeField.getText().equals("Not Applicable") ? 0 : Double.parseDouble(transportFeeField.getText()));
+            eventToUpdate.put("base_price", normalPriceField.getText().equals("Not Applicable") ? 0 : Double.parseDouble(normalPriceField.getText()));
+            eventToUpdate.put("early_bird_price", earlyBirdPriceField.getText().equals("Not Applicable") ? 0 : Double.parseDouble(earlyBirdPriceField.getText()));
+            eventToUpdate.put("early_bird_limit", earlyBirdLimitField.getText().equals("Not Applicable") ? 0 : Integer.parseInt(earlyBirdLimitField.getText()));
 
             JSONArray events = new JSONArray(new String(Files.readAllBytes(Paths.get("data/events.json"))));
             for (int i = 0; i < events.length(); i++) {

@@ -27,8 +27,11 @@ public class BookingDetailsPage {
         
         userDetailsPanel.add(new JLabel("Name:"));
         userDetailsPanel.add(new JLabel(booking.optString("fullName", "N/A")));
-        userDetailsPanel.add(new JLabel("Student ID:"));
+        
+        // --- UPDATED: Label text changed ---
+        userDetailsPanel.add(new JLabel("Student / Staff ID:"));
         userDetailsPanel.add(new JLabel(booking.optString("studentId", "N/A")));
+        
         userDetailsPanel.add(new JLabel("Contact Number:"));
         userDetailsPanel.add(new JLabel(booking.optString("contact", "N/A")));
         userDetailsPanel.add(new JLabel("Dietary Preference:"));

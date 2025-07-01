@@ -38,7 +38,7 @@ public class RegistrationForm {
 
         JLabel eventTypeLabel = new JLabel(event.optString("type", "EVENT").toUpperCase());
         eventTypeLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        
+
         JLabel eventNameLabel = new JLabel(event.optString("name", "Event Name"));
         eventNameLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
@@ -54,11 +54,9 @@ public class RegistrationForm {
         headerPanel.add(new JLabel("Venue: " + event.optString("venue")));
         headerPanel.add(priceLabel);
 
-        // --- THIS LOGIC HAS BEEN UPDATED ---
         int earlyBirdLimit = event.optInt("early_bird_limit", 0);
         int participantCount = event.getJSONArray("participants").length();
 
-        // Only show the "Available" text if the limit exists and has not been reached
         if (earlyBirdLimit > 0 && participantCount < earlyBirdLimit) {
             JLabel earlyBirdLabel = new JLabel("Early Bird Discount: Available");
             earlyBirdLabel.setFont(new Font("Arial", Font.ITALIC, 12));
@@ -80,7 +78,7 @@ public class RegistrationForm {
         // Labels
         gbc.gridx = 0;
         gbc.weightx = 0.3;
-        String[] labels = {"Name:", "Student ID:", "Contact Number:", "Email:", "Dietary Preferences:", "Need Transportation?"};
+        String[] labels = {"Name:", "Student / Staff ID:", "Contact Number:", "Email:", "Dietary Preferences:", "Need Transportation?"};
         for (int i = 0; i < labels.length; i++) {
             gbc.gridy = i;
             formPanel.add(new JLabel(labels[i]), gbc);
@@ -89,31 +87,41 @@ public class RegistrationForm {
         // Fields
         gbc.gridx = 1;
         gbc.weightx = 0.7;
-        
+
         nameField = new JTextField(15);
-        gbc.gridy = 0;
-        formPanel.add(nameField, gbc);
+        gbc.gridy = 0; formPanel.add(nameField, gbc);
 
         studentIdField = new JTextField(15);
-        gbc.gridy = 1;
-        formPanel.add(studentIdField, gbc);
+        gbc.gridy = 1; formPanel.add(studentIdField, gbc);
 
         contactField = new JTextField(15);
-        gbc.gridy = 2;
-        formPanel.add(contactField, gbc);
+        gbc.gridy = 2; formPanel.add(contactField, gbc);
 
         emailField = new JTextField(15);
-        gbc.gridy = 3;
-        formPanel.add(emailField, gbc);
+        gbc.gridy = 3; formPanel.add(emailField, gbc);
 
-        dietaryComboBox = new JComboBox<>(new String[]{"None", "Vegetarian", "Non-Vegetarian"});
+        dietaryComboBox = new JComboBox<>();
         gbc.gridy = 4;
+        boolean foodProvided = event.optBoolean("provides_food", false);
+        if (foodProvided) {
+            dietaryComboBox.setModel(new DefaultComboBoxModel<>(new String[]{"None", "Vegetarian", "Non-Vegetarian"}));
+            dietaryComboBox.setEnabled(true);
+        } else {
+            dietaryComboBox.setModel(new DefaultComboBoxModel<>(new String[]{"Not Applicable"}));
+            dietaryComboBox.setEnabled(false);
+        }
         formPanel.add(dietaryComboBox, gbc);
 
-        transportComboBox = new JComboBox<>(new String[]{"No", "Yes"});
+        transportComboBox = new JComboBox<>();
         gbc.gridy = 5;
-        // Hide option if transport is not provided by management
-        transportComboBox.setVisible(event.optBoolean("provides_transportation", false));
+        boolean transportProvided = event.optBoolean("provides_transportation", false);
+        if (transportProvided) {
+            transportComboBox.setModel(new DefaultComboBoxModel<>(new String[]{"No", "Yes"}));
+            transportComboBox.setEnabled(true);
+        } else {
+            transportComboBox.setModel(new DefaultComboBoxModel<>(new String[]{"Not Applicable"}));
+            transportComboBox.setEnabled(false);
+        }
         formPanel.add(transportComboBox, gbc);
 
         return formPanel;
@@ -130,27 +138,42 @@ public class RegistrationForm {
         });
 
         JButton nextButton = new JButton("NEXT");
+        // --- THIS ACTION LISTENER HAS BEEN UPDATED ---
         nextButton.addActionListener(e -> {
-            // Simple validation
-            if (nameField.getText().isEmpty() || studentIdField.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Name and Student ID are required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            String name = nameField.getText();
+            String id = studentIdField.getText();
+            String contact = contactField.getText();
+            String email = emailField.getText();
+
+            // Validation checks
+            if (name.isEmpty() || id.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Name and Student / Staff ID are required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            // Check if contact number contains only digits
+            if (!contact.matches("\\d+")) {
+                JOptionPane.showMessageDialog(frame, "Please enter a valid contact number (digits only).", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            // Check if email contains the "@" symbol
+            if (!email.contains("@")) {
+                JOptionPane.showMessageDialog(frame, "Please enter a valid email address.", "Input Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Collect data into a map
+            // Collect data into a map if validation passes
             Map<String, String> userDetails = new HashMap<>();
-            userDetails.put("fullName", nameField.getText());
-            userDetails.put("studentId", studentIdField.getText());
-            userDetails.put("contact", contactField.getText());
-            userDetails.put("email", emailField.getText());
+            userDetails.put("fullName", name);
+            userDetails.put("studentId", id);
+            userDetails.put("contact", contact);
+            userDetails.put("email", email);
             userDetails.put("dietary", (String) dietaryComboBox.getSelectedItem());
             userDetails.put("needsTransport", (String) transportComboBox.getSelectedItem());
-            
+
             frame.dispose();
-            // We now pass all the collected details to the next page
             new FeeCalculationPage(username, event, userDetails);
         });
-        
+
         footerPanel.add(backButton);
         footerPanel.add(nextButton);
 

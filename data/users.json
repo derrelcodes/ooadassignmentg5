@@ -46,5 +46,11 @@
         "role": "Management",
         "fullname": "Omar",
         "username": "omar"
+    },
+    {
+        "password": "pee",
+        "role": "staff",
+        "fullname": "Pee Chih Yang",
+        "username": "pee"
     }
 ]

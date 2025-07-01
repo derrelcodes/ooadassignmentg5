@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +30,6 @@ public class AdminDashboard {
 
         JScrollPane scrollPane = new JScrollPane(eventsPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // UPDATED LINE
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         frame.add(scrollPane, BorderLayout.CENTER);
@@ -93,6 +93,7 @@ public class AdminDashboard {
         eventsPanel.repaint();
     }
 
+    // --- THIS METHOD HAS BEEN UPDATED ---
     private JPanel createEventCard(JSONObject event) {
         JPanel card = new JPanel(new BorderLayout(10, 10));
         card.setBorder(BorderFactory.createCompoundBorder(
@@ -100,6 +101,7 @@ public class AdminDashboard {
             new EmptyBorder(10, 10, 10, 10)
         ));
 
+        // Details Panel (Top)
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
         detailsPanel.setOpaque(false);
@@ -114,13 +116,28 @@ public class AdminDashboard {
         detailsPanel.add(new JLabel("Capacity: " + event.getJSONArray("participants").length() + " / " + event.getInt("capacity")));
         detailsPanel.add(new JLabel("Created By: " + event.optString("createdBy", "N/A")));
 
-
+        // Poster Panel (Center)
+        JLabel posterLabel = new JLabel();
+        posterLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        posterLabel.setVerticalAlignment(SwingConstants.CENTER);
+        String posterPath = event.optString("poster_path");
+        if (posterPath != null && !posterPath.isEmpty() && new File(posterPath).exists()) {
+            ImageIcon imageIcon = new ImageIcon(posterPath);
+            // Scale image to fit
+            Image image = imageIcon.getImage().getScaledInstance(200, 120, Image.SCALE_SMOOTH);
+            posterLabel.setIcon(new ImageIcon(image));
+        } else {
+            posterLabel.setText("No Poster Available");
+        }
+        
+        // Button Panel (Bottom)
         JPanel buttonPanel = new JPanel(new GridLayout(2, 2, 5, 5));
         buttonPanel.setOpaque(false);
 
         JButton updateButton = new JButton("Update");
         updateButton.addActionListener(e -> {
             frame.dispose();
+            // Pass this frame to UpdateEventForm so it can be re-enabled
             new UpdateEventForm(event, this.username, this.role);
         });
 
@@ -149,7 +166,9 @@ public class AdminDashboard {
         buttonPanel.add(viewParticipantsButton);
         buttonPanel.add(cancelButton);
 
-        card.add(detailsPanel, BorderLayout.CENTER);
+        // Add components to card
+        card.add(detailsPanel, BorderLayout.NORTH);
+        card.add(posterLabel, BorderLayout.CENTER);
         card.add(buttonPanel, BorderLayout.SOUTH);
 
         return card;
